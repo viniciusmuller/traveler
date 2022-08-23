@@ -10,24 +10,26 @@ defmodule Traveler.Workers.Crawler do
   @impl Oban.Worker
   def perform(%Oban.Job{args: %{"url" => url}}) do
     %{host: host} = URI.parse(url)
+    Logger.debug("now crawling #{url}")
 
-    Logger.info("crawling #{url}")
     case Traveler.HttpClient.get_body(url) do
       nil ->
-        nil
+        {:error, :could_not_get_body}
 
       body ->
-        body |> get_urls(host) |> Enum.map(&enqueue_crawling/1)
+        with {:ok, links} <- get_urls(body, host) do
+          Enum.each(links, &enqueue_crawling/1)
+        end
     end
-
-    :ok
   end
 
-  defp get_urls(host, body) do
+  defp get_urls(body, host) do
     Traveler.HtmlParser.find_links(body, host)
   end
 
   defp enqueue_crawling(url) do
+    Logger.debug("adding #{url} to the search queue")
+
     %{url: url}
     |> Crawler.new()
     |> Oban.insert()

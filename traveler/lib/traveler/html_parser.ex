@@ -1,4 +1,8 @@
 defmodule Traveler.HtmlParser do
+  @moduledoc """
+  Module that helps when dealing with HTML returned by sites.
+  """
+
   def find_links(body, host) do
     case Floki.parse_document(body) do
       {:ok, document} ->
@@ -12,7 +16,7 @@ defmodule Traveler.HtmlParser do
         {:ok, result}
 
       {:error, _} ->
-        {:ok, :could_not_parse_document}
+        {:error, :could_not_parse_document}
     end
   end
 
