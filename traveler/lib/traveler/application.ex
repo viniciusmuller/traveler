@@ -12,6 +12,8 @@ defmodule Traveler.Application do
       Traveler.Repo,
       # Server used for checking permissions when crawling URLs
       {Traveler.RoboticServer, name: Traveler.RoboticServer},
+      # Server that handles allowed hosts
+      {Traveler.HostAllower, name: Traveler.HostAllower},
       # Neo4j driver
       {Bolt.Sips, Application.get_env(:bolt_sips, Bolt)},
       # Oban

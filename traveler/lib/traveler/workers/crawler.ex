@@ -1,7 +1,7 @@
 defmodule Traveler.Workers.Crawler do
   use Oban.Worker,
     queue: :crawl,
-    max_attempts: 4
+    max_attempts: 25
 
   require Logger
 
@@ -20,7 +20,9 @@ defmodule Traveler.Workers.Crawler do
       {:ok, false} ->
         {:error, :not_allowed}
 
-      {:error, :unknown_host} ->
+      {:error, :host_not_found} ->
+        # TODO: This will recurse indefinitely if the request fails and does not
+        # add the host to the server's state.
         RoboticServer.add_host(url)
         perform(args)
     end
