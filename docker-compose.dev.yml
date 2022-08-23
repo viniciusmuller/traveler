@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  db:
+  postgres:
     image: postgres:14.1-alpine
     restart: always
     environment:
@@ -10,7 +10,26 @@ services:
     ports:
       - '5432:5432'
     volumes:
-      - db:/var/lib/postgresql/data
+      - postgres:/var/lib/postgresql/data
+
+  neo4j:
+    image: neo4j:4.4
+    restart: unless-stopped
+    ports:
+      - 7474:7474
+      - 7687:7687
+    volumes:
+      - ./conf:/conf
+      - ./data:/data
+      - ./import:/import
+      - ./logs:/logs
+      - ./plugins:/plugins
+    environment:
+      - NEO4J_AUTH=neo4j/neo4jsecret
+    #   # Raise memory limits
+    #   - NEO4J_dbms_memory_pagecache_size=1G
+    #   - NEO4J_dbms.memory.heap.initial_size=1G
+    #   - NEO4J_dbms_memory_heap_max__size=1G
 volumes:
-  db:
+  postgres:
     driver: local

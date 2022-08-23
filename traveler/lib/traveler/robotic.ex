@@ -14,8 +14,8 @@ defmodule Traveler.Robotic do
     @moduledoc false
 
     defstruct crawl_delay: 0,
-              allows: [],
-              disallows: []
+              allows: MapSet.new(),
+              disallows: MapSet.new()
   end
 
   defmodule RobotsToken do
@@ -59,10 +59,34 @@ defmodule Traveler.Robotic do
   #   "foo" => ["10..00"]
   #   "bar" => [100..00]
   # }
+  #
+  # defp build_graph(paths) when is_list(paths) do
+  #   Enum.reduce(paths, %{}, &process_paths/2)
+  # end
 
+  # defp process_paths(paths, allow_map) do
+  #   parts = String.split(paths, "/")
+
+  #   Enum.reduce(
+  #     parts,
+  #     allow_map(fn part, map ->
+
+  #     end)
+  #   )
+  # end
   # TODO: Use graphs to efficiently check for allowance
-  defp check_group(%RuleGroup{} = _group, _url) do
-    true
+  defp check_group(%RuleGroup{} = group, url) do
+    cond do
+      # TODO: Handle these patterns
+      String.contains?(url, ["**", "*", "$", "?", "&"]) -> false
+      String.ends_with?(url, "/") -> false
+      MapSet.member?(group.disallows, "/") -> false
+      MapSet.member?(group.disallows, "*") -> false
+      MapSet.member?(group.disallows, url) -> false
+      MapSet.member?(group.allows, url) -> true
+      # by default we crawl if there's nothing saying we can't
+      true -> true
+    end
   end
 
   @spec parse(String.t() | [String.t()]) :: %Robots{}
@@ -91,6 +115,10 @@ defmodule Traveler.Robotic do
 
   defp parser(token, acc) do
     case token do
+      :parsing_error ->
+        # TODO: fail fast?
+        acc
+
       {:user_agent, ua} ->
         add_user_agent(acc, ua)
 
@@ -126,7 +154,7 @@ defmodule Traveler.Robotic do
   defp add_allow(%RobotsToken{} = token, allow) do
     update_in(
       token.current_rule_group.allows,
-      fn allows -> [allow | allows] end
+      &MapSet.put(&1, allow)
     )
     |> Map.put(:new_rulegroup?, true)
   end
@@ -134,7 +162,7 @@ defmodule Traveler.Robotic do
   defp add_disallow(%RobotsToken{} = token, disallow) do
     update_in(
       token.current_rule_group.disallows,
-      fn disallows -> [disallow | disallows] end
+      &MapSet.put(&1, disallow)
     )
     |> Map.put(:new_rulegroup?, true)
   end
@@ -152,18 +180,7 @@ defmodule Traveler.Robotic do
       Enum.reduce(token.current_agents, groups, fn agent, group ->
         Map.put(group, agent, token.current_rule_group)
       end)
-      |> Enum.map(fn {k, rule_group} ->
-        rg = sort_rule_group_fields(rule_group)
-        {k, rg}
-      end)
-      |> Map.new()
     end)
-  end
-
-  defp sort_rule_group_fields(%RuleGroup{} = rg) do
-    rg
-    |> Map.update!(:allows, &Enum.reverse/1)
-    |> Map.update!(:disallows, &Enum.reverse/1)
   end
 
   defp add_current_agent(%RobotsToken{} = token, agent) do
@@ -214,4 +231,5 @@ defmodule Traveler.Robotic do
   defp process_line({"allow", allow}), do: {:allow, allow}
   defp process_line({"disallow", disallow}), do: {:disallow, disallow}
   defp process_line({"sitemap", sm}), do: {:sitemap, sm}
+  defp process_line(_), do: :parsing_error
 end

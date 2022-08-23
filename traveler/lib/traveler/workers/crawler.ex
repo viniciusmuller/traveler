@@ -6,12 +6,27 @@ defmodule Traveler.Workers.Crawler do
   require Logger
 
   alias Traveler.Workers.Crawler
+  alias Traveler.RoboticServer
 
   @impl Oban.Worker
-  def perform(%Oban.Job{args: %{"url" => url}}) do
+  def perform(%Oban.Job{args: %{"url" => url} = args}) do
     %{host: host} = URI.parse(url)
     Logger.debug("now crawling #{url}")
 
+    case RoboticServer.can_access?(url, "*") do
+      {:ok, true} ->
+        crawl(url, host)
+
+      {:ok, false} ->
+        {:error, :not_allowed}
+
+      {:error, :unknown_host} ->
+        RoboticServer.add_host(url)
+        perform(args)
+    end
+  end
+
+  defp crawl(url, host) do
     case Traveler.HttpClient.get_body(url) do
       nil ->
         {:error, :could_not_get_body}

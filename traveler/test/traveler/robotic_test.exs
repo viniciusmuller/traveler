@@ -16,7 +16,7 @@ defmodule Traveler.RoboticTest do
     expected = %Traveler.Robotic.Robots{
       groups: %{
         "mysterious" => %Traveler.Robotic.RuleGroup{
-          disallows: ["*"]
+          disallows: MapSet.new(["*"])
         }
       }
     }
@@ -34,7 +34,7 @@ defmodule Traveler.RoboticTest do
     expected = %Traveler.Robotic.Robots{
       groups: %{
         "*" => %Traveler.Robotic.RuleGroup{
-          disallows: [""],
+          disallows: MapSet.new([""]),
           crawl_delay: 30
         }
       }
@@ -53,7 +53,7 @@ defmodule Traveler.RoboticTest do
     expected = %Traveler.Robotic.Robots{
       groups: %{
         "*" => %Traveler.Robotic.RuleGroup{
-          allows: ["/foo", "/bar"]
+          allows: MapSet.new(["/foo", "/bar"])
         }
       }
     }
@@ -71,7 +71,7 @@ defmodule Traveler.RoboticTest do
     expected = %Traveler.Robotic.Robots{
       groups: %{
         "*" => %Traveler.Robotic.RuleGroup{
-          disallows: ["/foo", "/bar"]
+          disallows: MapSet.new(["/foo", "/bar"])
         }
       }
     }
@@ -92,7 +92,7 @@ defmodule Traveler.RoboticTest do
     expected = %Traveler.Robotic.Robots{
       groups: %{
         "*" => %Traveler.Robotic.RuleGroup{
-          disallows: ["/foo", "/bar"]
+          disallows: MapSet.new(["/foo", "/bar"])
         }
       },
       sitemaps: ["/foo/bar.xml", "/foo/baz.xml"]
@@ -114,10 +114,10 @@ defmodule Traveler.RoboticTest do
     expected = %Traveler.Robotic.Robots{
       groups: %{
         "foo" => %Traveler.Robotic.RuleGroup{
-          disallows: [""]
+          disallows: MapSet.new([""])
         },
         "bar" => %Traveler.Robotic.RuleGroup{
-          disallows: ["/test", "/secret"]
+          disallows: MapSet.new(["/test", "/secret"])
         }
       }
     }

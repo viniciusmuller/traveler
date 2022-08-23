@@ -51,6 +51,7 @@ defmodule Traveler.MixProject do
       {:plug_cowboy, "~> 2.5"},
       {:oban, "~> 2.13"},
       {:finch, "~> 0.13"},
+      {:bolt_sips, "~> 2.0"},
     ]
   end
 

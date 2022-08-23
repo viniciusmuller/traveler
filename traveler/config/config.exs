@@ -22,6 +22,11 @@ config :traveler, TravelerWeb.Endpoint,
   pubsub_server: Traveler.PubSub,
   live_view: [signing_salt: "yHS0ozHa"]
 
+config :bolt_sips, Bolt,
+  url: "bolt://localhost:7687",
+  basic_auth: [username: "neo4j", password: "neo4jsecret"],
+  pool_size: 10
+
 # Configures the mailer
 #
 # By default it uses the "Local" adapter which stores the emails

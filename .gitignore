@@ -1,0 +1,6 @@
+# neo4j docker stuff
+data
+logs
+conf/
+import/
+plugins/
