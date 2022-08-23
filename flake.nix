@@ -17,6 +17,7 @@
             elixir
             elixir_ls
             inotify-tools
+            docker-compose
 
             rnix-lsp
           ];

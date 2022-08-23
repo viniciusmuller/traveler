@@ -10,6 +10,8 @@ defmodule Traveler.Application do
     children = [
       # Start the Ecto repository
       Traveler.Repo,
+      {Oban, Application.fetch_env!(:traveler, Oban)},
+      {Finch, name: MyFinch},
       # Start the Telemetry supervisor
       TravelerWeb.Telemetry,
       # Start the PubSub system

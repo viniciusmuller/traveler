@@ -10,6 +10,11 @@ import Config
 config :traveler,
   ecto_repos: [Traveler.Repo]
 
+config :traveler, Oban,
+  repo: Traveler.Repo,
+  plugins: [Oban.Plugins.Pruner],
+  queues: [default: 10]
+
 # Configures the endpoint
 config :traveler, TravelerWeb.Endpoint,
   url: [host: "localhost"],
