@@ -22,12 +22,12 @@ defmodule Traveler.HostAllower do
   end
 
   @impl true
-  def handle_call({:host_allowed?, _host}, _from, _cache) do
+  def handle_call({:host_allowed?, _host}, _from, cache) do
     # case MapSet.member?(cache, host) do
     #   true -> true
     #   false -> false
     # end
-    true
+    {:reply, true, cache}
   end
 
   @impl true

@@ -7,6 +7,7 @@ defmodule Traveler.Workers.Crawler do
 
   alias Traveler.Workers.Crawler
   alias Traveler.RoboticServer
+  alias Traveler.Pages
 
   @impl Oban.Worker
   def perform(%Oban.Job{args: %{"url" => url} = args}) do
@@ -35,7 +36,7 @@ defmodule Traveler.Workers.Crawler do
 
       body ->
         with {:ok, links} <- get_urls(body, host) do
-          Enum.each(links, &enqueue_crawling/1)
+          Enum.each(links, &enqueue_crawling(&1, url))
         end
     end
   end
@@ -44,9 +45,18 @@ defmodule Traveler.Workers.Crawler do
     Traveler.HtmlParser.find_links(body, host)
   end
 
-  defp enqueue_crawling(url) do
+  defp enqueue_crawling(url, referrer) do
     Logger.debug("adding #{url} to the search queue")
 
+    case Pages.get_page(url) do
+      {:ok, _page} -> nil
+      :error ->
+        Pages.add_page(url, "body", referrer)
+        add_job(url)
+    end
+  end
+
+  defp add_job(url) do
     %{url: url}
     |> Crawler.new()
     |> Oban.insert()
