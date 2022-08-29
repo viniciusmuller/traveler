@@ -1,31 +1,45 @@
 defmodule Traveler.Workers.Crawler do
-  use Oban.Worker,
-    queue: :crawl,
-    max_attempts: 25
-
   require Logger
 
-  alias Traveler.Workers.Crawler
   alias Traveler.RoboticServer
   alias Traveler.Pages
+  alias Traveler.Hosts
+  alias Traveler.PagesQueue
+  alias Traveler.Schemas.Page
+  alias Traveler.HtmlParser
 
-  @impl Oban.Worker
-  def perform(%Oban.Job{args: %{"url" => url} = args}) do
-    %{host: host} = URI.parse(url)
-    Logger.debug("now crawling #{url}")
+  def crawl() do
+    url = PagesQueue.get_page()
+    crawl(url)
+  end
 
-    case RoboticServer.can_access?(url, "*") do
-      {:ok, true} ->
-        crawl(url, host)
+  def crawl(url) do
+    case url do
+      {:ok, url} ->
+        %{host: host} = URI.parse(url)
 
-      {:ok, false} ->
-        {:error, :not_allowed}
+        with {:ok, _} <- Hosts.fetch_allowed_host(host),
+             {:ok, true} <- RoboticServer.can_access?(url, "*") do
+          Logger.debug("#{inspect(self())} now crawling #{url}")
+          crawl(url, host)
+        else
+          {:ok, false} ->
+            {:error, :not_allowed}
 
-      {:error, :host_not_found} ->
-        # TODO: This will recurse indefinitely if the request fails and does not
-        # add the host to the server's state.
-        RoboticServer.add_host(url)
-        perform(args)
+          {:error, :host_not_found} ->
+            # TODO: This will recurse indefinitely if the request fails and does not
+            # add the host to the server's state.
+            # TODO: Handle this
+            RoboticServer.add_host(url)
+            IO.inspect(url)
+
+          :error ->
+            {:error, :disallowed_host}
+        end
+
+      {:error, :empty} ->
+        Logger.debug("#{inspect(self())} no urls to crawl")
+        nil
     end
   end
 
@@ -35,30 +49,33 @@ defmodule Traveler.Workers.Crawler do
         {:error, :could_not_get_body}
 
       body ->
-        with {:ok, links} <- get_urls(body, host) do
-          Enum.each(links, &enqueue_crawling(&1, url))
+        with {:ok, %HtmlParser.ParsedPage{links: links, title: title}} <-
+               HtmlParser.parse_page(body, host) do
+          # TODO: Struct for referrer? currently it's a {url, title} tuple
+          Enum.each(links, &enqueue_crawling(&1, {url, title}))
         end
     end
   end
 
-  defp get_urls(body, host) do
-    Traveler.HtmlParser.find_links(body, host)
-  end
+  defp enqueue_crawling(url, {referrer_url, title} = referrer) do
+    # only add page to crawling if it does not exist already
+    with :error <- Pages.fetch_page(url) do
+      Logger.debug("url: #{url}, referrer: #{inspect referrer}")
+      Logger.debug("adding #{url} to the search queue")
 
-  defp enqueue_crawling(url, referrer) do
-    Logger.debug("adding #{url} to the search queue")
+      # If the page already exists in the db, don't index it again
+      case Pages.fetch_page(url) do
+        {:ok, %Page{}} ->
+          nil
 
-    case Pages.get_page(url) do
-      {:ok, _page} -> nil
-      :error ->
-        Pages.add_page(url, "body", referrer)
-        add_job(url)
+        # Otherwise index it
+        :error ->
+          Pages.add_page(url, "body", title)
+          PagesQueue.add_page(url)
+      end
     end
-  end
 
-  defp add_job(url) do
-    %{url: url}
-    |> Crawler.new()
-    |> Oban.insert()
+    # TODO: Linking seems to be working for some sites
+    {:ok, _} = Pages.relate_pages(url, referrer_url)
   end
 end

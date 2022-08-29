@@ -1,0 +1,26 @@
+<h1>Listing Allowed hosts</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+<%= for allowed_host <- @allowed_hosts do %>
+    <tr>
+      <td><%= allowed_host.name %></td>
+
+      <td>
+        <span><%= link "Show", to: Routes.allowed_host_path(@conn, :show, allowed_host) %></span>
+        <span><%= link "Edit", to: Routes.allowed_host_path(@conn, :edit, allowed_host) %></span>
+        <span><%= link "Delete", to: Routes.allowed_host_path(@conn, :delete, allowed_host), method: :delete, data: [confirm: "Are you sure?"] %></span>
+      </td>
+    </tr>
+<% end %>
+  </tbody>
+</table>
+
+<span><%= link "New Allowed host", to: Routes.allowed_host_path(@conn, :new) %></span>

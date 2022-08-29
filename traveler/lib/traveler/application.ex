@@ -12,12 +12,13 @@ defmodule Traveler.Application do
       Traveler.Repo,
       # Server used for checking permissions when crawling URLs
       {Traveler.RoboticServer, name: Traveler.RoboticServer},
-      # Server that handles allowed hosts
-      {Traveler.HostAllower, name: Traveler.HostAllower},
+      # TODO: Try to do that using GenStage for producer and consumers
+      # Pages
+      {Traveler.PagesQueue, name: Traveler.PagesQueue},
+      Traveler.CrawlerManager,
+      {Task.Supervisor, name: Traveler.TaskSupervisor},
       # Neo4j driver
       {Bolt.Sips, Application.get_env(:bolt_sips, Bolt)},
-      # Oban
-      {Oban, Application.fetch_env!(:traveler, Oban)},
       # HTTP Client
       {Finch, name: MyFinch},
       # Start the Telemetry supervisor

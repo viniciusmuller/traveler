@@ -18,6 +18,7 @@ defmodule TravelerWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :index
+    resources "/allowed-hosts", AllowedHostController
   end
 
   # Other scopes may use custom stacks.

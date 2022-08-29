@@ -1,0 +1,13 @@
+<h1>Show Allowed host</h1>
+
+<ul>
+
+  <li>
+    <strong>Name:</strong>
+    <%= @allowed_host.name %>
+  </li>
+
+</ul>
+
+<span><%= link "Edit", to: Routes.allowed_host_path(@conn, :edit, @allowed_host) %></span> |
+<span><%= link "Back", to: Routes.allowed_host_path(@conn, :index) %></span>

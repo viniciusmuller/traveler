@@ -31,10 +31,7 @@ defmodule Traveler.Robotic do
   # TODO: IDNA support
   @spec can_access?(%Robots{}, String.t(), String.t()) :: boolean()
   def can_access?(%Robots{} = robots, user_agent, url) do
-    %{host: host} = URI.parse(url)
-
-    with true <- Traveler.HostAllower.host_allowed?(host),
-         {:ok, group} <- Map.fetch(robots.groups, user_agent) do
+    with {:ok, group} <- Map.fetch(robots.groups, user_agent) do
       check_group(group, url)
     else
       :error ->

@@ -1,0 +1,5 @@
+<h1>Edit Allowed host</h1>
+
+<%= render "form.html", Map.put(assigns, :action, Routes.allowed_host_path(@conn, :update, @allowed_host)) %>
+
+<span><%= link "Back", to: Routes.allowed_host_path(@conn, :index) %></span>

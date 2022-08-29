@@ -3,20 +3,33 @@ defmodule Traveler.HtmlParser do
   Module that helps when dealing with HTML returned by sites.
   """
 
-  def find_links(body, host) do
+  defmodule ParsedPage do
+    defstruct [:title, :links]
+  end
+
+  def parse_page(body, host) do
     case Floki.parse_document(body) do
       {:ok, document} ->
-        result =
+        title = find_title(document)
+
+        links =
           document
           |> Floki.find("a")
           |> Floki.attribute("href")
           |> Stream.map(&find_url(&1, host))
           |> Enum.filter(&(not is_nil(&1)))
 
-        {:ok, result}
+        {:ok, %ParsedPage{title: title, links: links}}
 
       {:error, _} ->
         {:error, :could_not_parse_document}
+    end
+  end
+
+  defp find_title(document) do
+    case Floki.find(document, "title") do
+      [{"title", _, [title]} | _rest] -> title
+      _ -> nil
     end
   end
 
